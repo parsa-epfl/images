@@ -4,3 +4,5 @@ kernel/ filter=lfs diff=lfs merge=lfs -text
 ubuntu-16.04-blank/initrd.img-4.4.0-83-generic filter=lfs diff=lfs merge=lfs -text
 ubuntu-16.04-blank/vmlinuz-4.4.0-83-generic filter=lfs diff=lfs merge=lfs -text
 ubuntu-16.04-blank/ubuntu-16.04-lts-blank.qcow2.bz2 filter=lfs diff=lfs merge=lfs -text
+new-ubuntu/QEMU_EFI.fd filter=lfs diff=lfs merge=lfs -text
+new-ubuntu/ubuntu-16.04-efi-blank.qcow2 filter=lfs diff=lfs merge=lfs -text
