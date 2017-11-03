@@ -51,4 +51,7 @@ dd if=/dev/zero of=flash1.img bs=1M count=64
 console="ttyS0" console="ttyAMA0"
 ```
 11. Boot and enjoy. My QEMU command currently looks like:
+```bash
 ./qemu/aarch64-softmmu/qemu-system-aarch64 -drive file=./images/new-ubuntu/flash0.img,if=pflash,format=raw,unit=0,readonly=on -drive file=./images/new-ubuntu/flash1.img,if=pflash,format=raw,unit=1,readonly=on -m 2048 -nographic -device virtio-scsi-device,id=scsi -drive file=./images/new-ubuntu/ubuntu-16.04-efi-blank.qcow2,id=rootimg,cache=unsafe,if=none -device scsi-hd,drive=rootimg -machine virt -cpu cortex-a57 -netdev user,id=net1,hostfwd=tcp::2220-:22 -device virtio-net-device,mac=52:54:00:00:00:00,netdev=net1 -nographic
+```
+
