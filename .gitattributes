@@ -7,3 +7,4 @@ ubuntu-16.04-blank/ubuntu-16.04-lts-blank.qcow2.bz2 filter=lfs diff=lfs merge=lf
 new-ubuntu/QEMU_EFI.fd filter=lfs diff=lfs merge=lfs -text
 new-ubuntu/flash1.img filter=lfs diff=lfs merge=lfs -text
 new-ubuntu/flash0.img filter=lfs diff=lfs merge=lfs -text
+new-ubuntu/ubuntu-16.04.3-efi-docker-COMPRESSED.qcow2 filter=lfs diff=lfs merge=lfs -text
