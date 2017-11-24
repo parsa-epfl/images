@@ -1,2 +1,0 @@
-biosFlash_0.img filter=lfs diff=lfs merge=lfs -text
-biosFlash_1.img filter=lfs diff=lfs merge=lfs -text
