@@ -2,8 +2,9 @@
 Quick documentation for how I made a full new QEMU image from a stock Ubuntu ISO, without extracting initrd.
 
 ### Building EDK2
-1. First, need to build and specify the QEMU bootloader for AARCH64. See this guide (I've already added a submodule for edk2): 
+1. First, need to build and specify the QEMU bootloader for AARCH64. See these guides: 
     - https://wiki.ubuntu.com/UEFI/EDK2
+    - https://wiki.linaro.org/LEG/UEFIforQEMU
    
 ### Setup your Images
 2. Then, get your ubuntu server image (server is nice because it's headless, doesn't install Gnome or KDE)
