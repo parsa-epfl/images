@@ -66,11 +66,11 @@ $ console="ttyS0" console="ttyAMA0"
 10. Boot and enjoy. My QEMU command currently looks like:
 ```bash
 $ ./qemu/aarch64-softmmu/qemu-system-aarch64 \
-    -drive file=./images/new-ubuntu/flash0.img,if=pflash,format=raw,unit=0,readonly=on \
-    -drive file=./images/new-ubuntu/flash1.img,if=pflash,format=raw,unit=1,readonly=on \
+    -drive file=./images/new-ubuntu/biosFlash_0.img,if=pflash,format=raw,unit=0,readonly=on \
+    -drive file=./images/new-ubuntu/biosFlash_1.img,if=pflash,format=raw,unit=1,readonly=on \
     -m 2048 \
     -device virtio-scsi-device,id=scsi \
-    -drive file=./images/new-ubuntu/ubuntu-16.04-efi-blank.qcow2,id=rootimg,cache=unsafe,if=none \
+    -drive file=./images/new-ubuntu/ubuntu-16.04.3-efi-docker.qcow2,id=rootimg,cache=unsafe,if=none \
     -device scsi-hd,drive=rootimg \
     -machine virt \
     -cpu cortex-a57 \
