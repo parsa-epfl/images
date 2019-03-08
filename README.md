@@ -47,6 +47,8 @@ After this I managed to install the image. It took really a long time for me to 
 ### Useful webpages:
 - https://designprincipia.com/virtualize-uefi-on-arm-using-qemu/
 - http://snapshots.linaro.org/components/kernel/leg-virt-tianocore-edk2-upstream/latest
+- https://www.spec.org/cpu2006/Docs/install-guide-unix.html
+- https://www.spec.org/cpu2006/Docs/runspec.html#section3
 
 
 # How to use this image
