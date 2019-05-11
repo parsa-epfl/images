@@ -3,3 +3,4 @@ ubuntu16.tar.gz filter=lfs diff=lfs merge=lfs -text
 ubuntu-arm/ubuntu.qcow2 filter=lfs diff=lfs merge=lfs -text
 ubuntu-arm/flash0.img filter=lfs diff=lfs merge=lfs -text
 ubuntu-arm/flash1.img filter=lfs diff=lfs merge=lfs -text
+ubuntu-arm/*.img filter=lfs diff=lfs merge=lfs -text
