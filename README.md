@@ -1,77 +1,68 @@
 
-# How to install a similar image
+# How to use the sample Matrix Multiplication checkpoint
+#### This readme provides instructions on how to setup the matrix multiplication benchmark for the QFlex [tutorial](https://qflex.epfl.ch/download/).
 
-My machine:  ubuntu 16.04 LTS (64 bit)
-
-
-### - Download an iso - be sure its for ARM64 in this case
-
-### - Download an appropirate EFI binary from Linaro's website:
-[I used this one for a 64bit install](http://snapshots.linaro.org/components/kernel/leg-virt-tianocore-edk2-upstream/latest/QEMU-AARCH64/RELEASE_GCC5/)
-
-### - Create a QEMU image: - i prefer having a very large disk as i dont have to resize it again. also I recommend using LVM for your installation so that you can easily resize partitions.
+Checkout this [matmul](https://github.com/parsa-epfl/images/tree/matmul) branch, and fetch all the files using git lfs.  
+($home is the directory containing the main qflex folder)
 ```
-qemu-img create -f qcow2 1000G
+cd $home/qflex/images
+git checkout matmul
+git lfs fetch
+git lfs pull
 ```
 
-### - Create flash drives for the EFI:
+Decompress the ubuntu16.tar.gz and matmul.tar.gz files.
 ```
-dd if=/dev/zero of=flash0.img bs=1M count=64 
-dd if=/dev/zero of=flash1.img bs=1M count=64
-dd if=QEMU_EFI.fd of=flash0.img conv=notrunc
-```
-
-### - Run QEMU:
-```
-export MYISO=<your iso>
-export MYIMAGE=<your image>
-
-qemu-system-aarch64 \
--M virt -m 1G -cpu cortex-a57 -smp 4 \
--global virtio-blk-device.scsi=off -device virtio-scsi-device,id=scsi -rtc driftfix=slew -nographic \
--drive file=$MYISO,id=cdrom,if=none,media=cdrom \
--pflash flash0.img \
--pflash flash1.img \
--drive if=none,file=$MYIMAGE,id=hd0 \
--device scsi-hd,drive=hd0 -device virtio-scsi-device \
--device scsi-cd,drive=cdrom \
--netdev user,id=net1,hostfwd=tcp::2220-:22 -device virtio-net-device,mac=52:54:00:00:02:12,netdev=net1
+tar -xvf ubuntu16.tar.gz
+tar -xvf matmul.tar.gz
 ```
 
-### Issues
-Basically, when I ran QEMU to install the image on disk, I was getting an error indicating that the install cannot locate the CD-ROM. turns out this was an ubuntu bug and has been fixed by installing the "debian-installer" package.
-[BUG](https://bugs.launchpad.net/ubuntu/+source/debian-installer/+bug/1605407)
-
-After this I managed to install the image. It took really a long time for me to go through the install, so be patient.
-
-### Useful webpages:
-- https://designprincipia.com/virtualize-uefi-on-arm-using-qemu/
-- http://snapshots.linaro.org/components/kernel/leg-virt-tianocore-edk2-upstream/latest
-- https://www.spec.org/cpu2006/Docs/install-guide-unix.html
-- https://www.spec.org/cpu2006/Docs/runspec.html#section3
-
-
-# How to use this image
-
-Basically, remove the CD-ROM drive and device from the above command:
-
-
+Now, the ubuntu16 folder contains the base Ubuntu image, while the matmul folder contains two checkpoints created using our external snapshots feature.  
+Move the two checkpoints to the ubuntu16 folder for simplicity
 ```
-qemu-system-aarch64 \
--M virt -m 1G -cpu cortex-a57 -smp 4 \
--global virtio-blk-device.scsi=off -device virtio-scsi-device,id=scsi -rtc driftfix=slew -nographic \
--pflash flash0.img \
--pflash flash1.img \
--drive if=none,file=$MYIMAGE,id=hd0 \
--device scsi-hd,drive=hd0 -device virtio-scsi-device \
--netdev user,id=net1,hostfwd=tcp::2220-:22 -device virtio-net-device,mac=52:54:00:00:02:12,netdev=net1
+mv matmul/* ubuntu16/
 ```
 
+We have provided two checkpoints
+1. ramp_c1: containing a booted up Ubuntu image with some packages installed.
+2. matmul: containing the matrix multiplication benchmark. 
+The matmul checkpoint is based on the ramp_c1 checkpoint, so please make sure that both are present.
 
-Remember to setup your network when you first boot if you want to always keep having internet.
-
-One solution is [THIS](https://askubuntu.com/questions/193074/have-to-run-sudo-dhclient-eth0-automatically-every-boot) - Also, dont forget to set permissions for that file:
+In order to use the benchmarks, you first need to replace the image path present in the images according to your setup.  
+This can be done by using the following script.
 ```
-sudo chmod 755 /etc/rc.local
+$home/qflex/qemu/scripts/snap-manager.py --qemu-img-cmd-path $home/qflex/qemu update $home/qflex/images/ubuntu16/ubuntu.qcow2
 ```
 
+For all the checkpoints placed in the ubuntu16 folder, this command should change the paths and connect them to the base ubuntu16/ubuntu.qcow2 file.
+Please note that this command can only be run when qemu is configured for the emulation mode.
+
+Now these checkpoints are ready to use.  
+Please further follow the instruction [here](https://qflex.epfl.ch/download/).
+To use the captain scripts, modify the following parameters to reflect the machine configuration used in these checkpoints
+```
+qemu_core_count=1
+memory_size=4096
+starting_snapshot=matmul
+```
+
+Note:
+
+(If required) The corresponding absolute QEMU command to launch the checkpoint is
+```
+$home/qflex/qemu/aarch64-softmmu/qemu-system-aarch64 --machine virt,gic-version=3 -cpu cortex-a57 -smp 1 -m 4096 \
+-rtc clock=vm -nographic \
+-global virtio-blk-device.scsi=off -device virtio-scsi-device,id=scsi \
+-drive if=none,file=$home/qflex/images/ubuntu16/ubuntu.qcow2,id=hd0 \
+-pflash $home/qflex/images/ubuntu16/flash0.img \
+-pflash $home/qflex/images/ubuntu16/flash1.img \
+-device scsi-hd,drive=hd0 \
+-netdev user,id=net1,hostfwd=tcp::2230-:22 \
+-device virtio-net-device,mac=52:54:00:00:00:00,netdev=net1 \
+-exton -loadext matmul
+```
+
+The matrix multiplication benchmark used in this image is taken from https://github.com/attractivechaos/matmul.  
+And -mcpu=cortex-a57+nofp argument is used in compilation to avoid floating point and SIMD instructions.  
+For the same, all `float` keywords are replaced with `int` in the matmul.c file, and the fprintf calls for float variables are removed.
+This is done because current QFlex KnottyKraken simulator does not model SIMD or FP instructions.
