@@ -1,24 +1,21 @@
 
-# How to install a similar image
+# How to create an Ubuntu ARM image
 
-My machine:  ubuntu 16.04 LTS (64 bit)
+My image: ubuntu 16.04 LTS (64-bit)
+Make sure the ubuntu ISO you download is for ARM 64-bit
+Here is the [link](https://cdimage.ubuntu.com/releases/16.04/release/ubuntu-16.04.7-server-arm64.iso).
 
-
-### - Download an iso - be sure its for ARM64 in this case
-
-### - Download an appropirate EFI binary from Linaro's website:
-[I used this one for a 64bit install](http://snapshots.linaro.org/components/kernel/leg-virt-tianocore-edk2-upstream/latest/QEMU-AARCH64/RELEASE_GCC5/)
-
-### - Create a QEMU image: - i prefer having a very large disk as i dont have to resize it again. also I recommend using LVM for your installation so that you can easily resize partitions.
+### - Create a QEMU disk image (preferably large so that we don't need to resize).
 ```
-qemu-img create -f qcow2 1000G
+qemu-img create -f qcow2 100G
 ```
 
-### - Create flash drives for the EFI:
+### - Find an appropirate EFI binary:
 ```
-dd if=/dev/zero of=flash0.img bs=1M count=64 
+sudo apt-get install qemu-system-arm qemu-efi
+dd if=/dev/zero of=flash0.img bs=1M count=64
+dd if=/usr/share/qemu-efi/QEMU_EFI.fd of=flash0.img conv=notrunc
 dd if=/dev/zero of=flash1.img bs=1M count=64
-dd if=QEMU_EFI.fd of=flash0.img conv=notrunc
 ```
 
 ### - Run QEMU:
@@ -47,8 +44,6 @@ After this I managed to install the image. It took really a long time for me to 
 ### Useful webpages:
 - https://designprincipia.com/virtualize-uefi-on-arm-using-qemu/
 - http://snapshots.linaro.org/components/kernel/leg-virt-tianocore-edk2-upstream/latest
-- https://www.spec.org/cpu2006/Docs/install-guide-unix.html
-- https://www.spec.org/cpu2006/Docs/runspec.html#section3
 
 
 # How to use this image
