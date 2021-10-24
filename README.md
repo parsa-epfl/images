@@ -1,45 +1,81 @@
 
 # How to create an Ubuntu ARM image
 
-My image: ubuntu 16.04 LTS (64-bit)
-Make sure the ubuntu ISO you download is for ARM 64-bit
-Here is the [link](https://cdimage.ubuntu.com/releases/16.04/release/ubuntu-16.04.7-server-arm64.iso).
+My image: ubuntu 20.04 LTS Server (64-bit)
 
-### - Create a QEMU disk image (preferably large so that we don't need to resize).
+### - Create QEMU disk images
+
+NOTE: The script `run-make-ubuntu20.04-img.sh` does all these steps
+
+1. Install dependencies
 ```
-qemu-img create -f qcow2 100G
+sudo apt-get install qemu-efi-aarch64 qemu-system-aarch64 cloud-image-utils qemu-utils git-lfs
 ```
 
-### - Find an appropirate EFI binary:
+2. Create ARM binary images
+
 ```
-sudo apt-get install qemu-system-arm qemu-efi
 dd if=/dev/zero of=flash0.img bs=1M count=64
-dd if=/usr/share/qemu-efi/QEMU_EFI.fd of=flash0.img conv=notrunc
+dd if=/usr/share/qemu-efi-aarch64/QEMU_EFI.fd of=flash0.img conv=notrunc
 dd if=/dev/zero of=flash1.img bs=1M count=64
 ```
 
-### - Run QEMU:
+3. Transform the to modern format (qcow2)
 ```
-export MYISO=<your iso>
-export MYIMAGE=<your image>
+qemu-img convert -f raw -O qcow2 flash0.img flash0.qcow2
+qemu-img convert -f raw -O qcow2 flash1.img flash1.qcow2
+rm -f flash0.img flash1.img
+```
 
-qemu-system-aarch64 \
--M virt -m 1G -cpu cortex-a57 -smp 4 \
--global virtio-blk-device.scsi=off -device virtio-scsi-device,id=scsi -rtc driftfix=slew -nographic \
--drive file=$MYISO,id=cdrom,if=none,media=cdrom \
--pflash flash0.img \
--pflash flash1.img \
--drive if=none,file=$MYIMAGE,id=hd0 \
--device scsi-hd,drive=hd0 -device virtio-scsi-device \
--device scsi-cd,drive=cdrom \
--netdev user,id=net1,hostfwd=tcp::2220-:22 -device virtio-net-device,mac=52:54:00:00:02:12,netdev=net1
+4. Create a base image for the OS
+
 ```
+qemu-img create ubuntu20LTS.qcow2 4T -f qcow2
+
+```
+
+4. Download Ubuntu ISO for ARM 64-bit (aarch64)
+Make sure the ubuntu ISO you download is for ARM 64-bit.
+Here is the [link](https://cdimage.ubuntu.com/releases/20.04/release/ubuntu-20.04.3-live-server-arm64.iso).
+```
+wget 'https://cdimage.ubuntu.com/releases/20.04/release/ubuntu-20.04.3-live-server-arm64.iso'
+```
+
+### - Boot the image and install the OS (takes a long time)
+
+1.  Boot the installation disk:
+
+NOTE: script `run-install-image.sh` has this command.
+
+```
+qemu-system-aarch64 \
+	-cpu max -M virt,gic-version=3 \
+	-smp 4 -m 8G \
+	-nographic \
+	-rtc clock=vm \
+	--accel tcg,thread=multi \
+    -global virtio-blk-device.scsi=off \
+    -device virtio-scsi-device,id=scsi0 \
+    -device virtio-scsi-device,id=scsi1 \
+    -device virtio-scsi-pci,id=scsi2 \
+    -device scsi-hd,drive=hd0 \
+    -netdev user,id=net0,hostfwd=tcp::2240-:22 \
+	-cdrom ubuntu-20.04.3-live-server-arm64.iso \
+    -device virtio-net-device,netdev=net0,mac=52:54:00:00:01:00 \
+    -drive file=flash0.qcow2,format=qcow2,if=pflash \
+    -drive file=flash1.qcow2,format=qcow2,if=pflash \
+    -drive file=ubuntu20LTS.qcow2,format=qcow2,id=hd0,if=none \
+```
+
+2. Follow instructions
+
+The image created in previous section is of 4TB, which should be more than enough for any workload.
+
+By default it should make the root drive a partition with LVM enabled, this will allow for the disk 
+drive to automatically expand so that you never run out of VM disk space and you don't start creating 
+a 4T image.
 
 ### Issues
-Basically, when I ran QEMU to install the image on disk, I was getting an error indicating that the install cannot locate the CD-ROM. turns out this was an ubuntu bug and has been fixed by installing the "debian-installer" package.
-[BUG](https://bugs.launchpad.net/ubuntu/+source/debian-installer/+bug/1605407)
-
-After this I managed to install the image. It took really a long time for me to go through the install, so be patient.
 
 ### Useful webpages:
 - https://designprincipia.com/virtualize-uefi-on-arm-using-qemu/
@@ -53,13 +89,23 @@ Basically, remove the CD-ROM drive and device from the above command:
 
 ```
 qemu-system-aarch64 \
--M virt -m 1G -cpu cortex-a57 -smp 4 \
--global virtio-blk-device.scsi=off -device virtio-scsi-device,id=scsi -rtc driftfix=slew -nographic \
--pflash flash0.img \
--pflash flash1.img \
--drive if=none,file=$MYIMAGE,id=hd0 \
--device scsi-hd,drive=hd0 -device virtio-scsi-device \
--netdev user,id=net1,hostfwd=tcp::2220-:22 -device virtio-net-device,mac=52:54:00:00:02:12,netdev=net1
+	-cpu max -M virt,gic-version=3 \
+	-smp 4 -m 8G \
+	-nographic \
+	-rtc clock=vm \
+	--accel tcg,thread=multi \
+    -global virtio-blk-device.scsi=off \
+    -device virtio-scsi-device,id=scsi0 \
+    -device virtio-scsi-device,id=scsi1 \
+    -device virtio-scsi-pci,id=scsi2 \
+    -device scsi-hd,drive=hd0 \
+    -netdev user,id=net0,hostfwd=tcp::2240-:22 \
+    -device virtio-net-device,netdev=net0,mac=52:54:00:00:01:00 \
+    -drive file=flash0.qcow2,format=qcow2,if=pflash \
+    -drive file=flash1.qcow2,format=qcow2,if=pflash \
+    -drive file=ubuntu20LTS.qcow2,format=qcow2,id=hd0,if=none \
+
+	#-cdrom ubuntu-20.04.3-live-server-arm64.iso \ # Removed line
 ```
 
 
