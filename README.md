@@ -3,6 +3,39 @@
 
 My image: ubuntu 20.04 LTS Server (64-bit)
 
+## - Get the QEMU ready image
+
+To get the image simply call the command:
+
+`wget https://github.com/parsa-epfl/images/raw/ubuntu20.04-aarch64/ubuntu20.tar.gz`
+`tar -xf ubuntu20.tar.gz`
+
+## How to run this image
+
+1. Install dependencies
+```
+sudo apt-get install qemu-efi-aarch64 qemu-system-aarch64 cloud-image-utils qemu-utils git-lfs
+```
+2. Run
+```
+qemu-system-aarch64 \
+	-cpu max -M virt,gic-version=3 \
+	-smp 4 -m 8G \
+	-nographic \
+	-rtc clock=vm \
+	--accel tcg,thread=multi \
+    -global virtio-blk-device.scsi=off \
+    -device virtio-scsi-device,id=scsi0 \
+    -device virtio-scsi-device,id=scsi1 \
+    -device virtio-scsi-pci,id=scsi2 \
+    -device scsi-hd,drive=hd0 \
+    -netdev user,id=net0,hostfwd=tcp::2240-:22 \
+    -device virtio-net-device,netdev=net0,mac=52:54:00:00:01:00 \
+    -drive file=flash0.qcow2,format=qcow2,if=pflash \
+    -drive file=flash1.qcow2,format=qcow2,if=pflash \
+    -drive file=ubuntu20LTS.qcow2,format=qcow2,id=hd0,if=none \
+```
+
 ### - Create QEMU disk images
 
 NOTE: The script `run-make-ubuntu20.04-img.sh` does all these steps
@@ -82,31 +115,6 @@ a 4T image.
 - http://snapshots.linaro.org/components/kernel/leg-virt-tianocore-edk2-upstream/latest
 
 
-# How to use this image
-
-Basically, remove the CD-ROM drive and device from the above command:
-
-
-```
-qemu-system-aarch64 \
-	-cpu max -M virt,gic-version=3 \
-	-smp 4 -m 8G \
-	-nographic \
-	-rtc clock=vm \
-	--accel tcg,thread=multi \
-    -global virtio-blk-device.scsi=off \
-    -device virtio-scsi-device,id=scsi0 \
-    -device virtio-scsi-device,id=scsi1 \
-    -device virtio-scsi-pci,id=scsi2 \
-    -device scsi-hd,drive=hd0 \
-    -netdev user,id=net0,hostfwd=tcp::2240-:22 \
-    -device virtio-net-device,netdev=net0,mac=52:54:00:00:01:00 \
-    -drive file=flash0.qcow2,format=qcow2,if=pflash \
-    -drive file=flash1.qcow2,format=qcow2,if=pflash \
-    -drive file=ubuntu20LTS.qcow2,format=qcow2,id=hd0,if=none \
-
-	#-cdrom ubuntu-20.04.3-live-server-arm64.iso \ # Removed line
-```
 
 
 Remember to setup your network when you first boot if you want to always keep having internet.
